@@ -27,20 +27,20 @@ D3 = 4.54
 print('deel 1 is transit')
 #transit = gehele schip boven water
 #berekenen oppervlakte waterlijn Awl in transit
-A_ponton = (L3-L2)*B3  # CORR: L3-L2
+A_ponton = L3*B3
 A_driehoek = (L2*B2)*0.5
 Awl_transit = A_ponton + A_driehoek
 print('Oppervlakte waterlijn transit is',Awl_transit,'in [m^2]')
 
 #traagheidsmoment van transit waterlijn in dwarsrichting
-It_transit_dwars_ponton = ((L3-L2)*(B3)**3)/12  # CORR: L3-L2
+It_transit_dwars_ponton = (L3*(B3)**3)/12
 It_transit_dwars_driehoek = (L2*(B3)**3)/48
 It_transit_dwars = It_transit_dwars_ponton + It_transit_dwars_driehoek
 print('Traagheidsmoment transit in dwarsrichting is',It_transit_dwars,'in [m^4]')
 
 #drukkingspunt in lengterichting vanaf kont
-G_ponton = ((L3-L2)*0.5)*A_ponton              #oppervalkte ponton * helft lengte ponton
-G_driehoek = (L3-((2/3)*L2))*A_driehoek   #oppervalkte driehoek * lengte tot zwaartepunt driehoek vanaf kont # CORR: L3-L2
+G_ponton = (L3*0.5)*A_ponton              #oppervalkte ponton * helft lengte ponton
+G_driehoek = (L3+((1/3)*L2))*A_driehoek   #oppervalkte driehoek * lengte tot zwaartepunt driehoek vanaf kont
 LCF_transit = (G_ponton + G_driehoek)/Awl_transit
 print('Drukkingspunt lengte transit is',LCF_transit,'in [m]')
 
@@ -79,7 +79,7 @@ print('Traagheidsmoment beladen in dwarsrichting is',It_beladen_dwars,'in [m^4]'
 
 #drukkingspunt in lengterichting vanaf kont
 G_torens = ((L1*0.5)*A_toren)*2               #oppervalkte toren * helft lengte ponten (*2)
-G_driehoek = (L3-((2/3)*L2))*A_driehoek       #oppervalkte driehoek * lengte tot zwaartepunt driehoek vanaf kont
+G_driehoek = (L3+((1/3)*L2))*A_driehoek       #oppervalkte driehoek * lengte tot zwaartepunt driehoek vanaf kont
 LCF_beladen = (G_torens + G_driehoek)/Awl_beladen
 print('Drukkingspunt lengte beladen is',LCF_beladen,'in [m]')
 
@@ -104,14 +104,14 @@ B2 = 43.8
 D2 = 25.0     #zelfde diepgang als torens achter
 
 #ponton
-L3 = 210.3    #als er een driehoek voor zit is het L3 - L2
+L3 = 210.3 + L2    #als er een driehoek voor zit is het L3 - L2
 B3 = 43.8
 D3 = 4.54
 
 # Voor de XYZ coordinaten nemen we 1/2 L3 als het midden.
-bodem = sc.Shape("rect", L3-L2, B2, D3, -L2/2, 0, 0)
-toren1 = sc.Shape("rect", L1, B1, D2, -(L3/2)+(L1/2), (B2/2) - (B1/2), D3)
-toren2 = sc.Shape("rect", L1, B1, D2, -(L3/2)+(L1/2), -(B2/2) + (B1/2), D3)
+bodem = sc.Shape("rect", L3-L2, B3, D3, -L2/2, 0, 0)
+toren1 = sc.Shape("rect", L1, B1, D1, -(L3/2)+(L1/2), (B2/2) - (B1/2), D3)
+toren2 = sc.Shape("rect", L1, B1, D1, -(L3/2)+(L1/2), -(B2/2) + (B1/2), D3)
 boeg = sc.Shape("triangle", L2, B2, D2, (L3/2)-(2*L2/3), 0, 0)
 
 ship = sc.Ship()
@@ -122,16 +122,12 @@ ship.addShape(toren2)
 ship.addShape(boeg)
 
 print('deel 1 is transit')
-print(ship.getxCentroid(depth=1))
-print(ship.getyCentroid(depth=1))
 print('Oppervlakte waterlijn transit is',ship.getArea(depth=1),'in [m^2]')
 print('Traagheidsmoment transit in dwarsrichting is',ship.getxMOI(depth=1),'in [m^4]')
 print('Drukkingspunt lengte transit is',ship.getxCentroid(depth=1) + L3/2,'in [m]')
 print('Traagheidsmoment transit in lengterichting',ship.getyMOI(depth=1),'in [m^4]')
 
 print('deel 2 is beladen')
-print(ship.getxCentroid(depth=6))
-print(ship.getyCentroid(depth=6))
 print('Oppervlakte waterlijn beladen is',ship.getArea(depth=6),'in [m^2]')
 print('Traagheidsmoment beladen in dwarsrichting is',ship.getxMOI(depth=6),'in [m^4]')
 print('Drukkingspunt lengte beladen is',ship.getxCentroid(depth=6) + L3/2,'in [m]')

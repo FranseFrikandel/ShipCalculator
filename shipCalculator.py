@@ -59,11 +59,11 @@ class Shape():
         """
         steiner = self.getArea()*(self.y-offset)**2
         if self.sType == "rect":
-            moi = self.width**3 * self.length / 12
+            moi = self.width**3 * self.length/12
         elif self.sType == "circle":
-            moi = 0.25*np.pi*self.width**4
+            moi = 0.25*np.pi*(self.width/2)**4 
         elif self.sType == "triangle":
-            moi = (1/48)*self.width**3*self.length
+            moi = self.width**3 * self.length/48
         return moi + steiner
 
     def getyMOI(self, offset):
@@ -72,11 +72,11 @@ class Shape():
         """
         steiner = self.getArea()*(self.x-offset)**2
         if self.sType == "rect":
-            moi = self.length**3 * self.width / 12
+            moi = self.length**3 * self.width/12
         elif self.sType == "circle":
             moi = 0.25*np.pi*self.width**4
         elif self.sType == "triangle":
-            moi = (1/36)*self.length**3*self.width
+            moi = self.length**3 * self.width/36
         return moi + steiner
         
     def isAtDepth(self, depth):
@@ -93,7 +93,7 @@ class CoG():
     """
     Voegt zwaartepunten toe aan een schip.
 
-    Gewicht ik kg
+    Gewicht in kg
     """
     weight: float
     x: float
@@ -210,7 +210,7 @@ class Ship():
         if depth == -1:
             checkDepth = False
 
-        centr = self.getyCentroid()
+        centr = self.getyCentroid(depth=depth)
         m = 0
         for sh in self.shapes:
             if checkDepth and not sh.isAtDepth(depth):
@@ -225,7 +225,7 @@ class Ship():
         if depth == -1:
             checkDepth = False
 
-        centr = self.getxCentroid()
+        centr = self.getxCentroid(depth=depth)
         m = 0
         for sh in self.shapes:
             if checkDepth and not sh.isAtDepth(depth):
