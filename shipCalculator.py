@@ -130,6 +130,8 @@ class Ship():
         self.CoGs = []
         if "diepgang" in kwargs:
             self.T = kwargs["diepgang"]
+        else:
+            self.T = -1
         if "rho" in kwargs:
             self.rho = kwargs["rho"]
         else:
@@ -164,8 +166,13 @@ class Ship():
         """Berekent dieptegang. Gaat er van uit dat het schip vlak staat.
         Gaat ook vanuit dat alle vormen op dezelfde diepte beginnen"""
         # TODO: Ondersteuning voor schepen onder een hoek.
-        # TODO: Ondersteuning voor vormen op verschillende dieptes
-        self.T = self.getWeight() / (self.rho * self.getArea())
+        m = self.getWeight()
+        T = 1
+        # TODO: Dit kan een oneindige loop veroorzaken als de diepte kort op de
+        # overgang tussen 2 dieptes ligt.
+        while self.T != T:
+            self.T = T
+            T = m/(self.getArea(self.T)*self.rho)
         return self.T
     
     def getWeight(self):
