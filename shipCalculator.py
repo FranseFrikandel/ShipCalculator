@@ -247,13 +247,13 @@ class Ship():
             ay += m.weight * m.y
             az += m.weight * m.z
         x = ax / mt
-        y = ax / mt
-        z = ax / mt
+        y = ay / mt
+        z = az / mt
         return (x,y,z)
     
     def getCoB(self):
         # TODO: Ondersteunt alleen rechtstaand schip.
-        if self.T == 0:
+        if self.T == -1:
             raise LookupError("Depth is not yet calculated")
         
         # Format: V, Centroid (X,Y,Z)
