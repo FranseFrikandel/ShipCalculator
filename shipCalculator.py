@@ -41,47 +41,43 @@ class Shape():
     def __post_init__(self):
         if self.sType == "circle":
             self.width = self.length
+        
+        if self.sType not in ["rect", "circle", "triangle"]:
+            raise TypeError("Shape type is not valid.")
 
     def getArea(self):
         if self.sType == "rect":
-            return self.length * self.width * self.height
+            return self.length * self.width
         elif self.sType == "circle":
-            return np.pi * self.length**2
+            return np.pi * (self.length/2)**2
         elif self.sType == "triangle":
             return (self.length * self.width / 2)
 
-    def getxMOI(self):
+    def getxMOI(self, offset):
         """
         Berekent het MOI over de as in de lengterichting.
         """
+        steiner = self.getArea()*(self.y-offset)**2
         if self.sType == "rect":
-            moi = self.width**3 * self.length / 12
-            steiner = self.getArea()*self.y**2
-            return moi + steiner
+            moi = self.width**3 * self.length/12
         elif self.sType == "circle":
-            moi = 0.25*np.pi*self.width**4
-            steiner = self.getArea()*self.y**2
-            return moi + steiner
+            moi = 0.25*np.pi*(self.width/2)**4 
         elif self.sType == "triangle":
-            moi = (1/48)*self.width**3*self.length
-            steiner = self.getArea()*self.y**2
+            moi = self.width**3 * self.length/48
+        return moi + steiner
 
-    def getyMOI(self):
+    def getyMOI(self, offset):
         """
         Berekent het MOI over de as in de breedterichting.
         """
+        steiner = self.getArea()*(self.x-offset)**2
         if self.sType == "rect":
-            moi = self.length**3 * self.width / 12
-            steiner = self.getArea()*self.x**2
-            return moi + steiner
+            moi = self.length**3 * self.width/12
         elif self.sType == "circle":
             moi = 0.25*np.pi*self.width**4
-            steiner = self.getArea()*self.x**2
-            return moi + steiner
         elif self.sType == "triangle":
-            moi = (1/36)*self.length**3*self.width
-            steiner = self.getArea()*self.x**2
-            return moi + steiner
+            moi = self.length**3 * self.width/36
+        return moi + steiner
         
     def isAtDepth(self, depth):
         """
@@ -92,13 +88,12 @@ class Shape():
         return False
 
 
-
 @dataclass
 class CoG():
     """
     Voegt zwaartepunten toe aan een schip.
 
-    Gewicht ik kg
+    Gewicht in kg
     """
     weight: float
     x: float
@@ -180,23 +175,69 @@ class Ship():
         for m in self.CoGs:
             mt += m.weight
         return mt
+
+    def getxCentroid(self, depth=-1):
+        """
+        Berekent de offset tussen de werkelijke centroid en de coordinaat 
+        nulpunt
+        """
+        checkDepth = True
+        if depth == -1:
+            checkDepth = False
+        
+        a = 0
+        ad = 0
+        for sh in self.shapes:
+            if checkDepth and not sh.isAtDepth(depth):
+                continue
+
+            a += sh.getArea()
+            ad += sh.x * sh.getArea()
+        return ad / a
     
-    def getxMOI(self):
+    def getyCentroid(self, depth=-1):
+        checkDepth = True
+        if depth == -1:
+            checkDepth = False
+        
+        a = 0
+        ad = 0
+        for sh in self.shapes:
+            if checkDepth and not sh.isAtDepth(depth):
+                continue
+
+            a += sh.getArea()
+            ad += sh.y * sh.getArea()
+        return ad / a
+
+    def getxMOI(self, depth=-1):
         # TODO: Werkt alleen als de centerlijn in het midden ligt. Berekent 
         # anders steiner-aandeel fout.
-        # TODO: Houdt nog geen rekening met dieptegang
+        checkDepth = True
+        if depth == -1:
+            checkDepth = False
+
+        centr = self.getyCentroid(depth=depth)
         m = 0
         for sh in self.shapes:
-            m += sh.getxMOI()
+            if checkDepth and not sh.isAtDepth(depth):
+                continue
+            m += sh.getxMOI(centr)
         return m
 
-    def getyMOI(self):
+    def getyMOI(self, depth=-1):
         # TODO: Werkt alleen als de centerlijn in het midden ligt. Berekent 
         # anders steiner-aandeel fout.
-        # TODO: Houdt nog geen rekening met dieptegang
+        checkDepth = True
+        if depth == -1:
+            checkDepth = False
+
+        centr = self.getxCentroid(depth=depth)
         m = 0
         for sh in self.shapes:
-            m += sh.getyMOI()
+            if checkDepth and not sh.isAtDepth(depth):
+                continue
+            m += sh.getyMOI(centr)
         return m
 
     def getCoG(self):
@@ -240,4 +281,4 @@ class Ship():
     
     def getTPC(self):
         # TODO?
-        return rho / (100000 * self.getArea())
+        return self.rho / (100000 * self.getArea())
