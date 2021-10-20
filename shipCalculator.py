@@ -4,66 +4,89 @@ from dataclasses import dataclass
 # TODO: Meeste functies die getArea() gebruiken houden nog geen rekening met 
 # dieptegangen.
 
-@dataclass
 class Shape():
     """
-    Een losse vorm. Meerdere vormen kunnen samen een schip vormen die bestaat 
-    uit meerdere simplistische vormen.
-
-    Deze vormen zijn massaloos, zie de CoG class voor zwaartepunten/gewichten 
-    toe te voegen.
+    args:
+    size - Een tuple in (length, width, height)
+    coord - Een tuple in (x, y, z)
 
     XY coordinaten zijn t.o.v. centroid. Voor een rechthoek dus het middelpunt,
     voor een driehoek op 1/3h, etc.
     Z coordinaten zijn t.o.v. de onderkant. Z=0 is de onderkant van het schip.
 
+    Deze vormen zijn massaloos, zie de CoG class voor zwaartepunten/gewichten 
+    toe te voegen.
+
     X is lengte van het schip
     Y is de breedte van het schip
     length is dus de grootte in X-richting,
-    width is dus de grootte in de Y-richting.
-
-    Ondersteunde vormen:
-    rect - Rechthoek.
-    circle - Cirkel. Hierbij voor lengte en breedte dezelfde waarde ingeven. 
-    TODO: Vervangen met ellips?
-    triangle - Driehoek. Gaat er van uit dat de "punt" altijd naar voor of 
-    achter wijst. LET OP: Dit wil zeggen dat schepen met een driehoek vorm die 
-    met de punt naar een zijkant wijst dus niet correct wordt berekend.
+    width de grootte in de Y-richting.
     """
-    sType: str
-    length: float
-    width: float
-    height: float
-    x: float
-    y: float
-    z: float
+    def __init__(self, size, coord):
+        self.size = size
+        self.coord = coord
 
-    def __post_init__(self):
-        if self.sType == "circle":
-            self.width = self.length
-        
-        if self.sType not in ["rect", "circle", "triangle"]:
-            raise TypeError("Shape type is not valid.")
+    def isAtDepth(self, depth):
+        """
+        Controleert of deze vorm op deze diepte bestaat
+        """
+        if self.coord[2] < depth < self.coord[2] + self.size[2]:
+            return True
+        return False
 
+
+class Rectangle(Shape):
     def getArea(self):
-        if self.sType == "rect":
-            return self.length * self.width
-        elif self.sType == "circle":
-            return np.pi * (self.length/2)**2
-        elif self.sType == "triangle":
-            return (self.length * self.width / 2)
+        return self.size[0] * self.size[1]
+
+    def getxMOI(self, offset):
+        """
+        Berekent het MOI over de as in de lengterichting.
+        """
+        steiner = self.getArea()*(self.coord[1]-offset)**2
+        moi = self.size[1]**3 * self.size[0]/12
+        return moi + steiner
+
+    def getyMOI(self, offset):
+        """
+        Berekent het MOI over de as in de breedterichting.
+        """
+        steiner = self.getArea()*(self.coord[0]-offset)**2
+        moi = self.size[0]**3 * self.size[1]/12
+        return moi + steiner
+
+
+class Triangle(Shape):
+    def getArea(self):
+        return self.size[0] * self.size[1] / 2
+
+    def getxMOI(self, offset):
+        """
+        Berekent het MOI over de as in de lengterichting.
+        """
+        steiner = self.getArea()*(self.coord[1]-offset)**2
+        moi = self.size[1]**3 * self.size[0]/48
+        return moi + steiner
+
+    def getyMOI(self, offset):
+        """
+        Berekent het MOI over de as in de breedterichting.
+        """
+        steiner = self.getArea()*(self.coord[0]-offset)**2
+        moi = self.size[0]**3 * self.size[1]/36
+        return moi + steiner
+
+
+class Circle(Shape):
+    def getArea(self):
+        return (self.size[0]/2)**2 * np.pi
 
     def getxMOI(self, offset):
         """
         Berekent het MOI over de as in de lengterichting.
         """
         steiner = self.getArea()*(self.y-offset)**2
-        if self.sType == "rect":
-            moi = self.width**3 * self.length/12
-        elif self.sType == "circle":
-            moi = 0.25*np.pi*(self.width/2)**4 
-        elif self.sType == "triangle":
-            moi = self.width**3 * self.length/48
+        moi = 0.25*np.pi*self.width**4
         return moi + steiner
 
     def getyMOI(self, offset):
@@ -71,21 +94,8 @@ class Shape():
         Berekent het MOI over de as in de breedterichting.
         """
         steiner = self.getArea()*(self.x-offset)**2
-        if self.sType == "rect":
-            moi = self.length**3 * self.width/12
-        elif self.sType == "circle":
-            moi = 0.25*np.pi*self.width**4
-        elif self.sType == "triangle":
-            moi = self.length**3 * self.width/36
+        moi = 0.25*np.pi*self.width**4
         return moi + steiner
-        
-    def isAtDepth(self, depth):
-        """
-        Controleert of deze vorm op deze diepte bestaat
-        """
-        if self.z < depth < self.z + self.height:
-            return True
-        return False
 
 
 @dataclass
@@ -192,7 +202,7 @@ class Ship():
                 continue
 
             a += sh.getArea()
-            ad += sh.x * sh.getArea()
+            ad += sh.coord[0] * sh.getArea()
         return ad / a
     
     def getyCentroid(self, depth=-1):
@@ -207,7 +217,7 @@ class Ship():
                 continue
 
             a += sh.getArea()
-            ad += sh.y * sh.getArea()
+            ad += sh.coord[1] * sh.getArea()
         return ad / a
 
     def getxMOI(self, depth=-1):
@@ -266,9 +276,9 @@ class Ship():
         # Format: V, Centroid (X,Y,Z)
         volumes = np.array([])
         for sh in self.shapes:
-            if self.T - sh.z > 0: # Controleert of de vorm onder water zit
-                v = (self.T - sh.z) * sh.getArea()
-                volumes.append([v, (sh.x, sh.y, sh.z)])
+            if self.T - sh.coord[2] > 0: # Controleert of de vorm onder water zit
+                v = (self.T - sh.coord[2]) * sh.getArea()
+                volumes.append([v, sh.coord])
         
         vt = 0
         vct = np.array([0, 0, 0])

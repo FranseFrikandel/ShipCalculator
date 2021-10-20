@@ -104,15 +104,15 @@ B2 = 43.8
 D2 = 25.0     #zelfde diepgang als torens achter
 
 #ponton
-L3 = 210.3 + L2    #als er een driehoek voor zit is het L3 - L2
+L3 = 210.3 + L2
 B3 = 43.8
 D3 = 4.54
 
 # Voor de XYZ coordinaten nemen we 1/2 L3 als het midden.
-bodem = sc.Shape("rect", L3-L2, B3, D3, -L2/2, 0, 0)
-toren1 = sc.Shape("rect", L1, B1, D1, -(L3/2)+(L1/2), (B2/2) - (B1/2), D3)
-toren2 = sc.Shape("rect", L1, B1, D1, -(L3/2)+(L1/2), -(B2/2) + (B1/2), D3)
-boeg = sc.Shape("triangle", L2, B2, D2, (L3/2)-(2*L2/3), 0, 0)
+bodem = sc.Rectangle((L3-L2, B3, D3), (-L2/2, 0, 0))
+toren1 = sc.Rectangle((L1, B1, D1), (-(L3/2)+(L1/2), (B2/2) - (B1/2), D3))
+toren2 = sc.Rectangle((L1, B1, D1), (-(L3/2)+(L1/2), -(B2/2) + (B1/2), D3))
+boeg = sc.Triangle((L2, B2, D2), ((L3/2)-(2*L2/3), 0, 0))
 
 ship = sc.Ship()
 
