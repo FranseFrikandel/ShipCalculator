@@ -292,3 +292,21 @@ class Ship():
     def getTPC(self):
         # TODO?
         return self.rho / (100000 * self.getArea())
+
+
+def calcSimpson(y, x):
+    """
+    Berekent simpson-regel met onbeperkt aantal punten, zolang het een oneven aantal is.
+    """
+    if len(y) % 2 == 0:
+        raise Exception("Even aantal Y-punten, moet oneven zijn.")
+    
+    A = 0
+    A += 1*y[0]
+    for i in range(1, len(y)-1):
+        if i%2 == 0:
+            A += 2*y[i]
+        else:
+            A += 4*y[i]
+
+    return A * (1/3) * x
