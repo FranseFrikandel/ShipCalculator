@@ -15,7 +15,3 @@ if __name__ == "__main__":
 
     moi = 50**3 * 50 / 12
     assert (moi/errMargin) <= ship.getxMOI() <= (moi*errMargin)
-
-    # Voorbeeldfunctie: 4-x^2, van -2 naar 2 geintegreerd.
-    integ = 10.6666666
-    assert (integ/errMargin) <= sc.calcSimpson([0,4,0], 2) <= (integ*errMargin)
