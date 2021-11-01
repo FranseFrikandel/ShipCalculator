@@ -85,7 +85,7 @@ class Circle(Shape):
         """
         Berekent het MOI over de as in de lengterichting.
         """
-        steiner = self.getArea()*(self.y-offset)**2
+        steiner = self.getArea()*(self.coord[1]-offset)**2
         moi = 0.25*np.pi*self.width**4
         return moi + steiner
 
@@ -93,9 +93,38 @@ class Circle(Shape):
         """
         Berekent het MOI over de as in de breedterichting.
         """
-        steiner = self.getArea()*(self.x-offset)**2
+        steiner = self.getArea()*(self.coord[0]-offset)**2
         moi = 0.25*np.pi*self.width**4
         return moi + steiner
+
+
+class ComplexShape(Shape):
+    """Speciale klasse voor complexe vormen.
+    moi: een tuple in vorm (xMOI, yMOI)
+    area: totale oppervlakte
+    Let op: ongetest!"""
+    def __init__(self, size, coord, moi, area):
+        self.size = size
+        self.coord = coord
+        self.moi = moi
+        self.area = area
+
+    def getArea(self):
+        return self.area
+
+    def getxMOI(self, offset):
+        """
+        Berekent het MOI over de as in de lengterichting.
+        """
+        steiner = self.area*(self.coord[1]-offset)**2
+        return self.moi[0] + steiner
+
+    def getyMOI(self, offset):
+        """
+        Berekent het MOI over de as in de breedterichting.
+        """
+        steiner = self.area*(self.coord[0]-offset)**2
+        return self.moi[1] + steiner
 
 
 @dataclass
@@ -123,6 +152,8 @@ class LiqCont():
 class Ship():
     """
     Een schip-class. Bewaard alle variabelen en berekent vanalles.
+    TODO: Consistentie in of diepgang een functieparameter of een variabelen
+    in het object is.
     """
     def __init__(self, **kwargs):
         """
@@ -174,7 +205,7 @@ class Ship():
         m = self.getWeight()
         T = 1
         # TODO: Dit kan een oneindige loop veroorzaken als de diepte kort op de
-        # overgang tussen 2 dieptes ligt.
+        # overgang tussen 2 vormen ligt.
         while self.T != T:
             self.T = T
             T = m/(self.getArea(self.T)*self.rho)
@@ -268,6 +299,20 @@ class Ship():
         z = az / mt
         return (x,y,z)
     
+    def getNabla(self):
+        # TODO: Ondersteunt alleen rechtstaand schip.
+        if self.T == -1:
+            raise LookupError("Depth is not yet calculated")
+        
+        # Format: V, Centroid (X,Y,Z)
+        volume = 0
+        for sh in self.shapes:
+            if self.T - sh.coord[2] > 0: # Controleert of de vorm onder water zit
+                v = (self.T - sh.coord[2]) * sh.getArea()
+                volume += v
+        
+        return v
+
     def getCoB(self):
         # TODO: Ondersteunt alleen rechtstaand schip.
         if self.T == -1:
@@ -287,7 +332,9 @@ class Ship():
             vct += vol[1]*vol[0]
         
         return vct/vt
-        
+    
+    def getBM(self):
+        return self.getxMOI(depth=self.T) / self.getNabla()
     
     def getTPC(self):
         # TODO?
