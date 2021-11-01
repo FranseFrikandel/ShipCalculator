@@ -86,7 +86,7 @@ class Circle(Shape):
         Berekent het MOI over de as in de lengterichting.
         """
         steiner = self.getArea()*(self.coord[1]-offset)**2
-        moi = 0.25*np.pi*self.width**4
+        moi = 0.25*np.pi*self.size[0]**4
         return moi + steiner
 
     def getyMOI(self, offset):
@@ -94,7 +94,7 @@ class Circle(Shape):
         Berekent het MOI over de as in de breedterichting.
         """
         steiner = self.getArea()*(self.coord[0]-offset)**2
-        moi = 0.25*np.pi*self.width**4
+        moi = 0.25*np.pi*self.size[0]**4
         return moi + steiner
 
 
@@ -183,7 +183,7 @@ class Ship():
         if not isinstance(CoGOb, CoG):
             raise TypeError("Not a CoG object")
         
-        self.shapes.append(CoGOb)
+        self.CoGs.append(CoGOb)
     
     def getArea(self, depth=-1):
         # Berekent de waterlijnoppervalkte op een bepaalde diepgang
@@ -203,12 +203,12 @@ class Ship():
         Gaat ook vanuit dat alle vormen op dezelfde diepte beginnen"""
         # TODO: Ondersteuning voor schepen onder een hoek.
         m = self.getWeight()
-        T = 1
+        T = 0.01
         # TODO: Dit kan een oneindige loop veroorzaken als de diepte kort op de
         # overgang tussen 2 vormen ligt.
         while self.T != T:
             self.T = T
-            T = m/(self.getArea(self.T)*self.rho)
+            T = m/(self.getArea(depth=self.T)*self.rho)
         return self.T
     
     def getWeight(self):
@@ -337,5 +337,4 @@ class Ship():
         return self.getxMOI(depth=self.T) / self.getNabla()
     
     def getTPC(self):
-        # TODO?
         return self.rho / (100000 * self.getArea())
